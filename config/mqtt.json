@@ -6,6 +6,9 @@
     "username": "",
     "password": "",
 	"clientid": "voltronic_bd8041d0cdf131a6ba4e5b3360b8bc5a",
+    "invertername":"[INVERTER_NAME]",
+    "invertermodel":"[INVERTER_MODEL]",
+    "invertermanu":"Voltronic",
     "influx": {
         "enabled": "false",
         "host": "http://[INFLUX_IP_OR_URL]:8086", 
