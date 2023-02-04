@@ -2,13 +2,18 @@
 #
 # Simple script to register the MQTT topics when the container starts for the first time...
 
-MQTT_SERVER=`cat /etc/inverter/mqtt.json | jq '.server' -r`
-MQTT_PORT=`cat /etc/inverter/mqtt.json | jq '.port' -r`
-MQTT_TOPIC=`cat /etc/inverter/mqtt.json | jq '.topic' -r`
-MQTT_DEVICENAME=`cat /etc/inverter/mqtt.json | jq '.devicename' -r`
-MQTT_USERNAME=`cat /etc/inverter/mqtt.json | jq '.username' -r`
-MQTT_PASSWORD=`cat /etc/inverter/mqtt.json | jq '.password' -r`
-MQTT_CLIENTID=`cat /etc/inverter/mqtt.json | jq '.clientid' -r`
+CONFIG_FILE='/etc/inverter/mqtt.json'
+
+MQTT_SERVER=`cat $CONFIG_FILE | jq '.server' -r`
+MQTT_PORT=`cat $CONFIG_FILE | jq '.port' -r`
+MQTT_TOPIC=`cat $CONFIG_FILE | jq '.topic' -r`
+MQTT_DEVICENAME=`cat $CONFIG_FILE | jq '.devicename' -r`
+MQTT_USERNAME=`cat $CONFIG_FILE | jq '.username' -r`
+MQTT_PASSWORD=`cat $CONFIG_FILE | jq '.password' -r`
+MQTT_CLIENTID=`cat $CONFIG_FILE | jq '.clientid' -r`
+MQTT_INVERTERNAME=`cat $CONFIG_FILE | jq '.invertername' -r`
+MQTT_INVERTERMODEL=`cat $CONFIG_FILE | jq '.invertermodel' -r`
+MQTT_INVERTERMANU=`cat $CONFIG_FILE | jq '.invertermanu' -r`
 
 registerTopic () {
     mosquitto_pub \
@@ -21,8 +26,15 @@ registerTopic () {
         -m "{
             \"name\": \""$MQTT_DEVICENAME"_$1\",
             \"unit_of_measurement\": \"$2\",
-            \"state_topic\": \"$MQTT_TOPIC/sensor/"$MQTT_DEVICENAME"_$1\",
-            \"icon\": \"mdi:$3\"
+            \"unique_id\": \"$(echo "$MQTT_CLIENTID_$1" | shasum -a 1 | cut -f 1 -d ' ')\",
+            \"state_topic\": \"$MQTT_TOPIC/sensor/"$MQTT_DEVICENAME"/state\",
+            \"icon\": \"mdi:$3\",
+            \"value_template\": \"{{ value_json.$1 }}\",
+            \"device\": {
+                \"identifiers\": \"$MQTT_INVERTERNAME\",
+                \"name\": \"$MQTT_INVERTERNAME\",
+                \"model\": \"$MQTT_INVERTERMODEL\",
+                \"manufacturer\": \"$MQTT_INVERTERMANU\" }
         }"
 }
 
@@ -36,7 +48,8 @@ registerInverterRawCMD () {
         -t "$MQTT_TOPIC/sensor/$MQTT_DEVICENAME/config" \
         -m "{
             \"name\": \""$MQTT_DEVICENAME"\",
-            \"state_topic\": \"$MQTT_TOPIC/sensor/$MQTT_DEVICENAME\"
+            \"object_id\":\""$MQTT_CLIENTID"\",
+            \"state_topic\": \"$MQTT_TOPIC/sensor/$MQTT_DEVICENAME/state\"
         }"
 }
 
